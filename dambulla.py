@@ -1,21 +1,26 @@
 import simpy
 import random
 import statistics
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # ---------------- Parameters ----------------
-NUM_FARMERS = 500            # number of farmers
-NUM_DOCKS = 30               # number of loading docks
-SIM_TIME = 480              # 8 hours in minutes
+NUM_FARMERS = 450           # total farmers
+NUM_DOCKS = 30              # number of docks
+SIM_TIME = 480              # 8 hours (minutes)
 random.seed(42)
 
-def run_simulation_with_log(workers_per_dock, service_time_range, arrival_interval):
+
+# ---------------- Simulation Function ----------------
+def run_simulation(workers_per_dock, service_time_range, arrival_interval, scenario_name, verbose=False):
     env = simpy.Environment()
     docks = [simpy.Resource(env, capacity=workers_per_dock) for _ in range(NUM_DOCKS)]
     wait_times = []
     total_queue_samples = []
     metrics = {"served": 0, "busy_time": 0.0}
 
-    # Monitor queue lengths
+    # Queue monitoring
     def monitor():
         while True:
             total_q = sum(len(d.queue) for d in docks)
@@ -23,54 +28,61 @@ def run_simulation_with_log(workers_per_dock, service_time_range, arrival_interv
             yield env.timeout(1)
 
     # Farmer process
-    def farmer(env, farmer_id, docks, service_time_range, wait_times, metrics):
+    def farmer(env, farmer_id):
         arrival_time = env.now
-        print(f"Farmer {farmer_id} arrives at time {arrival_time:.2f}")
-
         dock = random.choice(docks)
         with dock.request() as req:
             yield req
             wait_time = env.now - arrival_time
             wait_times.append(wait_time)
-            print(f"Farmer {farmer_id} starts loading at time {env.now:.2f} after waiting {wait_time:.2f} min")
+
+            if verbose:
+                print(f"Farmer {farmer_id} starts at {env.now:.2f} (wait {wait_time:.2f} min)")
 
             service_time = random.uniform(*service_time_range)
             metrics["busy_time"] += service_time
             yield env.timeout(service_time)
-
             metrics["served"] += 1
-            print(f"Farmer {farmer_id} finished loading at time {env.now:.2f} (service time {service_time:.2f} min)")
 
-    # Generate farmers
+            if verbose:
+                print(f"Farmer {farmer_id} finished at {env.now:.2f} (service {service_time:.2f} min)")
+
+    # Farmer arrivals
     def generate_farmers(env):
         for i in range(1, NUM_FARMERS + 1):
-            env.process(farmer(env, i, docks, service_time_range, wait_times, metrics))
+            env.process(farmer(env, i))
             yield env.timeout(random.expovariate(1 / arrival_interval))
 
     env.process(monitor())
     env.process(generate_farmers(env))
     env.run(until=SIM_TIME)
 
-    # ---------- Performance Metrics ----------
-    avg_wait = statistics.mean(wait_times) if wait_times else 0.0
-    avg_queue = statistics.mean(total_queue_samples) if total_queue_samples else 0.0
-    throughput = metrics["served"] / SIM_TIME
-    utilization_rate = (metrics["busy_time"] / (NUM_DOCKS * workers_per_dock * SIM_TIME)) * 100.0
+    # ---------- Metrics ----------
+    avg_wait = round(statistics.mean(wait_times), 2) if wait_times else 0.0
+    avg_queue = round(statistics.mean(total_queue_samples), 2) if total_queue_samples else 0.0
+    throughput = round(metrics["served"] / SIM_TIME, 2)
+    utilization_rate = round((metrics["busy_time"] / (NUM_DOCKS * workers_per_dock * SIM_TIME)) * 100.0, 2)
 
-    # ---------- Print Summary ----------
-    print("\n=== Summary Metrics ===")
-    print(f"Average Wait Time: {avg_wait:.2f} min")
-    print(f"Average Queue Length: {avg_queue:.2f}")
-    print(f"Throughput: {throughput:.2f} farmers/min")
-    print(f"Dock Utilization: {utilization_rate:.1f}%")
+    return {
+        "Scenario": scenario_name,
+        "Avg Wait (min)": avg_wait,
+        "Avg Queue Length": avg_queue,
+        "Throughput (farmers/min)": throughput,
+        "Dock Utilization (%)": utilization_rate
+    }
+# ---------------- Run Simulation with Logging ----------------
+results = []
 
-# ---------------- Run Different Scenarios ----------------
+results.append(run_simulation(2, (50, 80), 0.8, "Baseline"))
+results.append(run_simulation(4, (30, 50), 0.8, "More Staff"))
+results.append(run_simulation(2, (50, 80), 1.5, "Arrival Smoothing"))
 
-#print("\n=== Scenario 1: Baseline (Current System) ===")
-#run_simulation_with_log(workers_per_dock=2, service_time_range=(50, 80), arrival_interval=0.8)
+# Create DataFrame
+df = pd.DataFrame(results)
+df = df.round(2)
+print("\n=== Dambulla economic center Simulation Results ===")
+print(df)
 
-#print("\n=== Scenario 2: Increased Workers (More Staff) ===")
-#run_simulation_with_log(workers_per_dock=4, service_time_range=(30, 50), arrival_interval=0.8)
-
-print("\n=== Scenario 3: Arrival Smoothing (Policy Change) ===")
-run_simulation_with_log(workers_per_dock=2, service_time_range=(50, 80), arrival_interval=1.5)
+#run_simulation(2, (50, 80), 0.8, "Baseline with Log", verbose=True)
+#run_simulation(4, (30, 50), 0.8, "More Staff with Log", verbose=True)
+#run_simulation(2, (50, 80), 1.5, "Arrival Smoothing with Log", verbose=True)
