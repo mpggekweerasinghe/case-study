@@ -2,8 +2,8 @@ import simpy
 import random
 import statistics
 import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
+
+
 
 # ---------------- Parameters ----------------
 NUM_FARMERS = 450           # total farmers
@@ -70,7 +70,7 @@ def run_simulation(workers_per_dock, service_time_range, arrival_interval, scena
         "Throughput (farmers/min)": throughput,
         "Dock Utilization (%)": utilization_rate
     }
-# ---------------- Run Simulation with Logging ----------------
+# ---------------- Run Simulation ----------------
 results = []
 
 results.append(run_simulation(2, (50, 80), 0.8, "Baseline"))
@@ -83,6 +83,6 @@ df = df.round(2)
 print("\n=== Dambulla economic center Simulation Results ===")
 print(df)
 
-#run_simulation(2, (50, 80), 0.8, "Baseline with Log", verbose=True)
+run_simulation(2, (50, 80), 0.8, "Baseline with Log", verbose=True)
 #run_simulation(4, (30, 50), 0.8, "More Staff with Log", verbose=True)
 #run_simulation(2, (50, 80), 1.5, "Arrival Smoothing with Log", verbose=True)
