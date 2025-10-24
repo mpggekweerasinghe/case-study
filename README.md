@@ -65,10 +65,10 @@ Output metrics
 
     | Metric                       | Description                                       |
     | ---------------------------- | ------------------------------------------------- |
-    | **Average wait (min)**       | Average time a farmer spends waiting for service. |
-    | **Average queue length**     | Mean number of farmers waiting across all docks.  |
-    | **Throughput (farmers/min)** | Average number of farmers served per minute.      |
-    | **Dock utilization (%)**     | Percentage of time all docks are busy.            |
+    |   Average wait (min)         | Average time a farmer spends waiting for service. |
+    |   Average queue length       | Mean number of farmers waiting across all docks.  |
+    |   Throughput (farmers/min)   | Average number of farmers served per minute.      |
+    |   Dock utilization (%)       | Percentage of time all docks are busy.            |
 
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -76,8 +76,8 @@ File description
 
     | File               | Purpose                                                 |
     | ------------------ | ------------------------------------------------------- |
-    | **dambulla.py**    | Core simulation script,  runs and prints summary table. |
-    | **dambulla.ipynb** | Extended analysis with visualizations and comparisons.  |
+    |   dambulla.py      | Core simulation script,  runs and prints summary table. |
+    |   dambulla.ipynb   | Extended analysis with visualizations and comparisons.  |
 
 
 --------------------------------------------------- End ---------------------------------------------------------------
